@@ -23,6 +23,7 @@ export default {
                 open: {
                     name: "Open",
                     expanded: true,
+                    data: [],
                     label: {
                         background: 'none',
                         color: 'black'
@@ -31,6 +32,7 @@ export default {
                 doing: {
                     name: "Doing",
                     expanded: true,
+                    data: [],
                     label: {
                         background: "#6699cc",
                         color: 'white'
@@ -39,6 +41,7 @@ export default {
                 done: {
                     name: "Done",
                     expanded: true,
+                    data: [],
                     label: {
                         background: "#00b140",
                         color: 'white'
