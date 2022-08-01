@@ -15,9 +15,16 @@
                 #{{ card.id }}
             </div>
             <div class="v-kaban-task-assignees" v-if="card.assignees">
-                <div class="v-kaban-task-assignee" v-for="assignee in card.assignees" :key="assignee.id">
+                <div class="v-kaban-task-assignee"
+                     v-for="assignee in card.assignees.slice(0, 2)"
+                     :key="assignee.id" :title="assignee.name">
                     <span v-for="part in assignee.name.split(' ')" :key="part">
                         {{ part[0] }}
+                    </span>
+                </div>
+                <div class="v-kaban-task-assignee" v-if="card.assignees.length > 2">
+                    <span :title="card.assignees.length - 2 + ' more'">
+                        +{{ card.assignees.length - 2 }}
                     </span>
                 </div>
             </div>
@@ -99,6 +106,7 @@ export default {
     font-size: 9pt;
     border-radius: 50%;
     background: #e7e7e7;
+    cursor: pointer;
 }
 
 .v-kaban-task-labels {
