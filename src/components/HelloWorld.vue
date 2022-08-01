@@ -23,7 +23,8 @@ export default {
                 open: {
                     name: "Open",
                     expanded: true,
-                    data: [],
+                    hideSettings: true,
+                    data: [{name: 'hobot'}],
                     label: {
                         background: 'none',
                         color: 'black'
@@ -41,6 +42,7 @@ export default {
                 done: {
                     name: "Done",
                     expanded: true,
+                    hideAddNewTask: true,
                     data: [],
                     label: {
                         background: "#00b140",
@@ -50,6 +52,9 @@ export default {
             }
         }
     },
+    methods: {
+
+    }
 }
 </script>
 
