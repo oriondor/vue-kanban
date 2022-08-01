@@ -1,10 +1,15 @@
 <template>
     <div class="hello">
         <v-kaban v-if="boards"
-            host="http://localhost:8081"
-            path="/kanban"
-            v-model="boards"
-        ></v-kaban>
+                 host="http://localhost:8081"
+                 path="/kanban"
+                 v-model="boards"
+                 :use-custom-card-style="false"
+        >
+<!--            <template #card-view="card">-->
+<!--                slot - {{card.id}}-->
+<!--            </template>-->
+        </v-kaban>
     </div>
 </template>
 

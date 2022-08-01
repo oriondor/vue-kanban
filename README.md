@@ -73,4 +73,8 @@ listSettingsLabel: {
     type: String,
     default: 'Settings' – label when you hover over settings button
 },
+useCustomCardStyle: {
+    type: Boolean,
+    default: false – pass true and overwrite card-view slot with your own HTML
+}
 ```

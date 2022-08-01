@@ -32,7 +32,18 @@
                         </div>
                     </div>
                 </div>
-                <div class="v-kaban-board-body"></div>
+                <div class="v-kaban-board-body" v-show="bConfig.expanded">
+                    <div :key="card.id" v-for="card in bConfig.data">
+                        <template v-if="useCustomCardStyle">
+                            <slot name="card-view" v-bind="card"></slot>
+                        </template>
+                        <template v-else>
+                            <kaban-card
+                                :card="card"
+                            ></kaban-card>
+                        </template>
+                    </div>
+                </div>
             </div>
         </template>
     </div>
@@ -42,10 +53,11 @@
 import axios from "axios";
 import CollapseChevron from "@/components/collapseChevron";
 import LabelBadge from "@/components/labelBadge";
+import KabanCard from "@/components/kabanCard";
 
 export default {
     name: "vKaban",
-    components: {LabelBadge, CollapseChevron},
+    components: {KabanCard, LabelBadge, CollapseChevron},
     props: {
         host: {
             type: String,
@@ -80,6 +92,10 @@ export default {
             type: String,
             default: 'Settings'
         },
+        useCustomCardStyle: {
+            type: Boolean,
+            default: false
+        }
     },
     data() {
         return {}
