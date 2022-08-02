@@ -108,6 +108,7 @@ export default {
             }
         },
         mouseDownHandler(event){
+            let self = this
             console.log(event);
             let mainIndex = null
             for (let index in event.path) {
@@ -116,26 +117,48 @@ export default {
                     break
                 }
             }
-            if (mainIndex) {
-                let draggable = event.path[mainIndex]
-                draggable.addEventListener('mousemove', this.mouseMoveHandler, false)
-                let br = draggable.getBoundingClientRect()
-                draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
-                draggable.addEventListener('mouseup', this.mouseUpHandler, false)
+            if (!mainIndex) {
+                return
             }
+            let draggable = event.path[mainIndex]
+
+            let mouseMoveHandler = function(e){
+                draggable.classList.add("dragging");
+                draggable.style.pointerEvents = 'none';
+                document.body.style.userSelect = 'none';
+                let deviation = draggable.initialDeviation
+                draggable.style.left = e.clientX - deviation.x + 'px'
+                draggable.style.top = e.clientY - deviation.y  + 'px'
+                // console.log('left', event.currentTarget.style.left);
+                // console.log('top', event.currentTarget.style.top);
+                let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
+                for (let bd of bodyDivs) {
+                    bd.addEventListener('mouseover', self.mouseOverHandler, false)
+                }
+            }
+
+            let mouseUpHandler = function(){
+                draggable.classList.remove("dragging");
+                document.body.removeEventListener('mousemove', mouseMoveHandler)
+                document.body.removeEventListener('mouseup', mouseUpHandler)
+                document.body.style.userSelect = 'initial';
+                draggable.style.pointerEvents = 'all';
+                let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
+                for (let bd of bodyDivs) {
+                    bd.removeEventListener('mouseover', self.mouseOverHandler)
+                }
+            }
+
+            // draggable.addEventListener('mousemove', mouseMoveHandler, false)
+            let br = draggable.getBoundingClientRect()
+            draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
+            // draggable.addEventListener('mouseup', mouseUpHandler, false)
+            document.body.addEventListener('mousemove', mouseMoveHandler, false)
+            document.body.addEventListener('mouseup', mouseUpHandler, false)
+
         },
-        mouseMoveHandler(event){
-            console.log('move', event);
-            event.currentTarget.classList.add("dragging");
-            let deviation = event.currentTarget.initialDeviation
-            event.currentTarget.style.left = event.clientX - deviation.x + 'px'
-            event.currentTarget.style.top = event.clientY - deviation.y  + 'px'
-            // console.log('left', event.currentTarget.style.left);
-            // console.log('top', event.currentTarget.style.top);
-        },
-        mouseUpHandler(event){
-            event.currentTarget.classList.remove("dragging");
-            event.currentTarget.removeEventListener('mousemove', this.mouseMoveHandler)
+        mouseOverHandler(event){
+            console.log('over', event);
         },
         getBoardEndpoint(board) {
             let template = {
