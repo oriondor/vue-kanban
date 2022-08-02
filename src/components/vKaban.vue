@@ -109,7 +109,6 @@ export default {
         },
         mouseDownHandler(event){
             let self = this
-            console.log(event);
             let mainIndex = null
             for (let index in event.path) {
                 if (event.path[index].className === 'v-kaban-board-body') {
@@ -117,7 +116,7 @@ export default {
                     break
                 }
             }
-            if (!mainIndex) {
+            if (mainIndex === null || mainIndex < 0) {
                 return
             }
             let draggable = event.path[mainIndex]
@@ -128,16 +127,18 @@ export default {
                 document.body.style.userSelect = 'none';
                 let deviation = draggable.initialDeviation
                 draggable.style.left = e.clientX - deviation.x + 'px'
-                draggable.style.top = e.clientY - deviation.y  + 'px'
+                draggable.style.top = e.clientY + 'px'
                 // console.log('left', event.currentTarget.style.left);
                 // console.log('top', event.currentTarget.style.top);
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
-                    bd.addEventListener('mouseover', self.mouseOverHandler, false)
+                    bd.addEventListener('mouseover', mouseOverHandler, false)
+                    bd.addEventListener('mouseleave', mouseLeaveHandler, false)
                 }
             }
 
-            let mouseUpHandler = function(){
+            let mouseUpHandler = function(e){
+                console.log('up', e);
                 draggable.classList.remove("dragging");
                 document.body.removeEventListener('mousemove', mouseMoveHandler)
                 document.body.removeEventListener('mouseup', mouseUpHandler)
@@ -145,20 +146,54 @@ export default {
                 draggable.style.pointerEvents = 'all';
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
-                    bd.removeEventListener('mouseover', self.mouseOverHandler)
+                    bd.removeEventListener('mouseover', mouseOverHandler)
+                    bd.removeEventListener('mouseleave', mouseLeaveHandler)
                 }
             }
 
-            // draggable.addEventListener('mousemove', mouseMoveHandler, false)
+            let mouseOverHandler = function(e) {
+                console.log('over', e);
+                self.shadowElement(e, draggable)
+            }
+
+            let mouseLeaveHandler = function(e) {
+                console.log('leave', e);
+                self.shadowElement(e, null, 'remove')
+            }
+
             let br = draggable.getBoundingClientRect()
             draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
-            // draggable.addEventListener('mouseup', mouseUpHandler, false)
             document.body.addEventListener('mousemove', mouseMoveHandler, false)
             document.body.addEventListener('mouseup', mouseUpHandler, false)
 
         },
-        mouseOverHandler(event){
-            console.log('over', event);
+        shadowElement(e, base=null, method='add'){
+            let place = null
+            console.log('place path', e.path);
+            for (let index in e.path) {
+                if (e.path[index].className === 'v-kaban-board-body') {
+                    place = e.path[index]
+                    break
+                }
+            }
+            if (!place) {
+                return
+            }
+            if (method === 'add' && base !== null) {
+                console.log('base', base);
+                let transparentDraggable = base.cloneNode(true)
+                console.log('cloned node', transparentDraggable);
+                transparentDraggable.style.opacity = '0.5'
+                transparentDraggable.classList.remove("dragging")
+                place.appendChild(transparentDraggable)
+            } else if (method === 'remove') {
+                let children = place.childNodes
+                for (let child of children) {
+                    if (child.style && child.style.opacity === '0.5') {
+                        place.removeChild(child)
+                    }
+                }
+            }
         },
         getBoardEndpoint(board) {
             let template = {
@@ -305,7 +340,8 @@ export default {
 }
 
 .v-kaban-board-body {
-
+    height: 100%;
+    overflow-y: auto;
 }
 
 .v-kaban-board-body div {
