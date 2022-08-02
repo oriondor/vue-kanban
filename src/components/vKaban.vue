@@ -101,6 +101,42 @@ export default {
         return {}
     },
     methods: {
+        initListeners(){
+            let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
+            for (let bd of bodyDivs) {
+                bd.addEventListener('mousedown', this.mouseDownHandler, false)
+            }
+        },
+        mouseDownHandler(event){
+            console.log(event);
+            let mainIndex = null
+            for (let index in event.path) {
+                if (event.path[index].className === 'v-kaban-board-body') {
+                    mainIndex = index - 1
+                    break
+                }
+            }
+            if (mainIndex) {
+                let draggable = event.path[mainIndex]
+                draggable.addEventListener('mousemove', this.mouseMoveHandler, false)
+                let br = draggable.getBoundingClientRect()
+                draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
+                draggable.addEventListener('mouseup', this.mouseUpHandler, false)
+            }
+        },
+        mouseMoveHandler(event){
+            console.log('move', event);
+            event.currentTarget.classList.add("dragging");
+            let deviation = event.currentTarget.initialDeviation
+            event.currentTarget.style.left = event.clientX - deviation.x + 'px'
+            event.currentTarget.style.top = event.clientY - deviation.y  + 'px'
+            // console.log('left', event.currentTarget.style.left);
+            // console.log('top', event.currentTarget.style.top);
+        },
+        mouseUpHandler(event){
+            event.currentTarget.classList.remove("dragging");
+            event.currentTarget.removeEventListener('mousemove', this.mouseMoveHandler)
+        },
         getBoardEndpoint(board) {
             let template = {
                 'queryBoardName': this.queryBoardName,
@@ -113,6 +149,13 @@ export default {
             return axios.get(this.getBoardEndpoint(board)).then((result) => {
                 return result.data
             })
+        },
+        getBoards(){
+            for (let b of Object.keys(this.boards)) {
+                this.retrieveBoardData(b).then((data)=>{
+                    this.boards[b].data = data
+                })
+            }
         },
         toggleCollapse(bKey) {
             this.boards[bKey].expanded = !this.boards[bKey].expanded
@@ -137,12 +180,8 @@ export default {
         },
     },
     mounted() {
-        console.log(this.modelValue);
-        for (let b of Object.keys(this.boards)) {
-            this.retrieveBoardData(b).then((data)=>{
-                this.boards[b].data = data
-            })
-        }
+        this.getBoards()
+        this.initListeners()
     },
     computed: {
         boards: {
@@ -244,5 +283,14 @@ export default {
 
 .v-kaban-board-body {
 
+}
+
+.v-kaban-board-body div {
+    cursor: pointer;
+    min-width: 445px;
+    min-height: 100px;
+}
+.dragging{
+    position: absolute;
 }
 </style>

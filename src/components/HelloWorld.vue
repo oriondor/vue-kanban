@@ -6,10 +6,17 @@
                  v-model="boards"
                  :use-custom-card-style="false"
         >
+        </v-kaban>
+<!--        <v-kaban v-if="boards"-->
+<!--                 host="http://localhost:8081"-->
+<!--                 path="/kanban"-->
+<!--                 v-model="boards"-->
+<!--                 :use-custom-card-style="true"-->
+<!--        >-->
 <!--            <template #card-view="card">-->
 <!--                slot - {{card.id}}-->
 <!--            </template>-->
-        </v-kaban>
+<!--        </v-kaban>-->
     </div>
 </template>
 
