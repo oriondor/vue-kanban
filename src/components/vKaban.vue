@@ -32,8 +32,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="v-kaban-board-body" v-show="bConfig.expanded">
-                    <div :key="card.id" v-for="card in bConfig.data">
+                <div class="v-kaban-board-body" v-show="bConfig.expanded" :data-name="bKey">
+                    <div :key="card.id" v-for="card in bConfig.data"
+                         @mousedown="mouseDownHandler($event, card)"
+                         :class="{transparent: card.transparent}"
+                         class="v-kaban-item"
+                    >
                         <template v-if="useCustomCardStyle">
                             <slot name="card-view" v-bind="card"></slot>
                         </template>
@@ -101,25 +105,36 @@ export default {
         return {}
     },
     methods: {
-        initListeners(){
-            let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
-            for (let bd of bodyDivs) {
-                bd.addEventListener('mousedown', this.mouseDownHandler, false)
-            }
-        },
-        mouseDownHandler(event){
-            let self = this
+        // initListeners(){
+        //     let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
+        //     for (let bd of bodyDivs) {
+        //         bd.addEventListener('mousedown', this.mouseDownHandler, false)
+        //     }
+        // },
+        getBoardNode(event, name, shift=0){
             let mainIndex = null
             for (let index in event.path) {
-                if (event.path[index].className === 'v-kaban-board-body') {
-                    mainIndex = index - 1
+                if (event.path[index].className === name) {
+                    mainIndex = parseInt(index) + parseInt(shift)
                     break
                 }
             }
             if (mainIndex === null || mainIndex < 0) {
+                return null
+            }
+            return event.path[mainIndex]
+        },
+        mouseDownHandler(event, card){
+            // console.log(event, card);
+            let self = this
+            let draggable = this.getBoardNode(event, 'v-kaban-board-body', -1)
+            if (draggable === null) {
                 return
             }
-            let draggable = event.path[mainIndex]
+            let br = draggable.getBoundingClientRect()
+            draggable = draggable.cloneNode(true)
+            let appContainer = document.getElementById('app')
+            appContainer.appendChild(draggable)
 
             let mouseMoveHandler = function(e){
                 draggable.classList.add("dragging");
@@ -127,9 +142,9 @@ export default {
                 document.body.style.userSelect = 'none';
                 let deviation = draggable.initialDeviation
                 draggable.style.left = e.clientX - deviation.x + 'px'
-                draggable.style.top = e.clientY + 'px'
-                // console.log('left', event.currentTarget.style.left);
-                // console.log('top', event.currentTarget.style.top);
+                draggable.style.top = e.clientY - deviation.y + 'px'
+                // // console.log('left', event.currentTarget.style.left);
+                // // console.log('top', event.currentTarget.style.top);
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
                     bd.addEventListener('mouseover', mouseOverHandler, false)
@@ -138,38 +153,59 @@ export default {
             }
 
             let mouseUpHandler = function(e){
-                console.log('up', e);
-                draggable.classList.remove("dragging");
+                // console.log('up', e);
+                appContainer.removeChild(draggable)
                 document.body.removeEventListener('mousemove', mouseMoveHandler)
                 document.body.removeEventListener('mouseup', mouseUpHandler)
                 document.body.style.userSelect = 'initial';
-                draggable.style.pointerEvents = 'all';
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
                     bd.removeEventListener('mouseover', mouseOverHandler)
                     bd.removeEventListener('mouseleave', mouseLeaveHandler)
                 }
+
+                let boardName = self.getBoardNode(e, 'v-kaban-board-body').getAttribute('data-name')
+                let index = self.boards[boardName].data.findIndex(e => e.id === card.id)
+                let fromBoard = self.getBoardNode(event,'v-kaban-board-body').getAttribute('data-name')
+                if (index !== -1) {
+                    self.boards[boardName].data[index].transparent = false
+                    self.$emit('taskMoved', {
+                        task: card,
+                        toBoard: boardName,
+                        fromBoard: fromBoard,
+                    })
+                }
             }
 
             let mouseOverHandler = function(e) {
-                console.log('over', e);
-                self.shadowElement(e, draggable)
+                self.shadowElement(e, card)
             }
 
             let mouseLeaveHandler = function(e) {
-                console.log('leave', e);
-                self.shadowElement(e, null, 'remove')
+                self.shadowElement(e, card, 'remove')
             }
 
-            let br = draggable.getBoundingClientRect()
+            // console.log('getBoundingClientRect', br);
             draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
             document.body.addEventListener('mousemove', mouseMoveHandler, false)
             document.body.addEventListener('mouseup', mouseUpHandler, false)
 
         },
-        shadowElement(e, base=null, method='add'){
+        isElementInBoard(boardName, data) {
+            let boardData = this.boards[boardName].data.map(e => e.id)
+            let id = data.id ? data.id : data
+            return boardData.includes(id)
+
+        },
+        shadowElement(e, data, method='add'){
+            let shadowCard = {
+                ...data,
+                ...{
+                    transparent: true
+                }
+            }
             let place = null
-            console.log('place path', e.path);
+            // console.log('place path', e.path);
             for (let index in e.path) {
                 if (e.path[index].className === 'v-kaban-board-body') {
                     place = e.path[index]
@@ -179,21 +215,35 @@ export default {
             if (!place) {
                 return
             }
-            if (method === 'add' && base !== null) {
-                console.log('base', base);
-                let transparentDraggable = base.cloneNode(true)
-                console.log('cloned node', transparentDraggable);
-                transparentDraggable.style.opacity = '0.5'
-                transparentDraggable.classList.remove("dragging")
-                place.appendChild(transparentDraggable)
-            } else if (method === 'remove') {
-                let children = place.childNodes
-                for (let child of children) {
-                    if (child.style && child.style.opacity === '0.5') {
-                        place.removeChild(child)
-                    }
-                }
+            let boardName = place.getAttribute('data-name')
+            // console.log('boardName', boardName);
+            // // console.log(shadowCard, method);
+            if (method === 'add' && !this.isElementInBoard(boardName, shadowCard)) {
+                this.boards[boardName].data.push(shadowCard)
+                return
             }
+            if (method === 'remove' && this.isElementInBoard(boardName, shadowCard)) {
+                let index = this.boards[boardName].data.findIndex(e => e.id === shadowCard.id)
+                if (index !== -1) {
+                    this.boards[boardName].data.splice(index, 1)
+                }
+                return
+            }
+            // if (method === 'add' && base !== null) {
+            //     // console.log('base', base);
+            //     let transparentDraggable = base.cloneNode(true)
+            //     // console.log('cloned node', transparentDraggable);
+            //     transparentDraggable.style.opacity = '0.5'
+            //     transparentDraggable.classList.remove("dragging")
+            //     place.appendChild(transparentDraggable)
+            // } else if (method === 'remove') {
+            //     let children = place.childNodes
+            //     for (let child of children) {
+            //         if (child.style && child.style.opacity === '0.5') {
+            //             place.removeChild(child)
+            //         }
+            //     }
+            // }
         },
         getBoardEndpoint(board) {
             let template = {
@@ -239,7 +289,7 @@ export default {
     },
     mounted() {
         this.getBoards()
-        this.initListeners()
+        // this.initListeners()
     },
     computed: {
         boards: {
@@ -344,12 +394,15 @@ export default {
     overflow-y: auto;
 }
 
-.v-kaban-board-body div {
+.v-kaban-item {
     cursor: pointer;
     min-width: 445px;
     min-height: 100px;
 }
 .dragging{
     position: absolute;
+}
+.transparent{
+    opacity: 0.5;
 }
 </style>

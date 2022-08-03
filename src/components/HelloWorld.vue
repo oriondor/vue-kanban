@@ -5,6 +5,7 @@
                  path="/kanban"
                  v-model="boards"
                  :use-custom-card-style="false"
+                 @taskMoved="taskMoveHandler"
         >
         </v-kaban>
 <!--        <v-kaban v-if="boards"-->
@@ -65,7 +66,9 @@ export default {
         }
     },
     methods: {
-
+        taskMoveHandler(data){
+            console.log('handler', data);
+        }
     }
 }
 </script>
