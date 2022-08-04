@@ -178,11 +178,14 @@ export default {
             }
 
             let mouseOverHandler = function(e) {
-                self.shadowElement(e, card)
+                console.log('over', e);
+                let index = self.handlePositionInsideBoard(e)
+                console.log('index is', index);
+                self.shadowElement(e, card, index)
             }
 
             let mouseLeaveHandler = function(e) {
-                self.shadowElement(e, card, 'remove')
+                self.shadowElement(e, card, undefined, 'remove')
             }
 
             // console.log('getBoundingClientRect', br);
@@ -191,13 +194,29 @@ export default {
             document.body.addEventListener('mouseup', mouseUpHandler, false)
 
         },
+        handlePositionInsideBoard(e){
+            let elemNode = this.getBoardNode(e,'v-kaban-board-body', -1)
+            let bodyNode = this.getBoardNode(e,'v-kaban-board-body')
+            if (bodyNode.children && bodyNode.children.length) {
+                for (let in_c in bodyNode.children) {
+                    if (bodyNode.children[in_c] === elemNode) {
+                        return in_c
+                    }
+                }
+            }
+        },
         isElementInBoard(boardName, data) {
             let boardData = this.boards[boardName].data.map(e => e.id)
             let id = data.id ? data.id : data
             return boardData.includes(id)
-
         },
-        shadowElement(e, data, method='add'){
+        removeElementFromBoard(boardName, data){
+            let index = this.boards[boardName].data.findIndex(e => e.id === (data.id ? data.id : data))
+            if (index !== -1) {
+                this.boards[boardName].data.splice(index, 1)
+            }
+        },
+        shadowElement(e, data, index=undefined, method='add'){
             let shadowCard = {
                 ...data,
                 ...{
@@ -205,7 +224,6 @@ export default {
                 }
             }
             let place = null
-            // console.log('place path', e.path);
             for (let index in e.path) {
                 if (e.path[index].className === 'v-kaban-board-body') {
                     place = e.path[index]
@@ -216,34 +234,17 @@ export default {
                 return
             }
             let boardName = place.getAttribute('data-name')
-            // console.log('boardName', boardName);
-            // // console.log(shadowCard, method);
+
+            if (this.isElementInBoard(boardName, shadowCard)) {
+                this.removeElementFromBoard(boardName, shadowCard)
+            }
+
             if (method === 'add' && !this.isElementInBoard(boardName, shadowCard)) {
-                this.boards[boardName].data.push(shadowCard)
-                return
-            }
-            if (method === 'remove' && this.isElementInBoard(boardName, shadowCard)) {
-                let index = this.boards[boardName].data.findIndex(e => e.id === shadowCard.id)
-                if (index !== -1) {
-                    this.boards[boardName].data.splice(index, 1)
+                if (index === undefined) {
+                    index = this.boards[boardName].data.length
                 }
-                return
+                this.boards[boardName].data.splice(index, 0, shadowCard)
             }
-            // if (method === 'add' && base !== null) {
-            //     // console.log('base', base);
-            //     let transparentDraggable = base.cloneNode(true)
-            //     // console.log('cloned node', transparentDraggable);
-            //     transparentDraggable.style.opacity = '0.5'
-            //     transparentDraggable.classList.remove("dragging")
-            //     place.appendChild(transparentDraggable)
-            // } else if (method === 'remove') {
-            //     let children = place.childNodes
-            //     for (let child of children) {
-            //         if (child.style && child.style.opacity === '0.5') {
-            //             place.removeChild(child)
-            //         }
-            //     }
-            // }
         },
         getBoardEndpoint(board) {
             let template = {
@@ -398,9 +399,15 @@ export default {
     cursor: pointer;
     min-width: 445px;
     min-height: 100px;
+    -webkit-transition: all 500ms ease-in-out;
+    -moz-transition: all 500ms ease-in-out;
+    -ms-transition: all 500ms ease-in-out;
+    -o-transition: all 500ms ease-in-out;
+    transition: all 500ms ease-in-out;
 }
 .dragging{
     position: absolute;
+    transition: unset;
 }
 .transparent{
     opacity: 0.5;
