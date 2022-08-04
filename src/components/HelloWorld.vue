@@ -6,6 +6,8 @@
                  v-model="boards"
                  :use-custom-card-style="false"
                  @taskMoved="taskMoveHandler"
+                 ordering-type="linkedList"
+                 @changedElements="changedHandler"
         >
         </v-kaban>
 <!--        <v-kaban v-if="boards"-->
@@ -68,6 +70,9 @@ export default {
     methods: {
         taskMoveHandler(data){
             console.log('handler', data);
+        },
+        changedHandler(data){
+            console.log('what to update', data);
         }
     }
 }

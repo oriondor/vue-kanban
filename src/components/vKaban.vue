@@ -99,19 +99,22 @@ export default {
         useCustomCardStyle: {
             type: Boolean,
             default: false
+        },
+        orderingType: {
+            /**
+             * none - not to handle any order
+             * linkedList - expects {..., ordering: {is_head: <true, false>, next: <int(id), null>}, ....}
+             * stringSort - expects {..., ordering: <string>, ...}
+             */
+            type: String,
+            default: 'none'
         }
     },
     data() {
         return {}
     },
     methods: {
-        // initListeners(){
-        //     let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
-        //     for (let bd of bodyDivs) {
-        //         bd.addEventListener('mousedown', this.mouseDownHandler, false)
-        //     }
-        // },
-        getBoardNode(event, name, shift=0){
+        getBoardNode(event, name, shift=0) {
             let mainIndex = null
             for (let index in event.path) {
                 if (event.path[index].className === name) {
@@ -124,8 +127,7 @@ export default {
             }
             return event.path[mainIndex]
         },
-        mouseDownHandler(event, card){
-            // console.log(event, card);
+        mouseDownHandler(event, card) {
             let self = this
             let draggable = this.getBoardNode(event, 'v-kaban-board-body', -1)
             if (draggable === null) {
@@ -136,15 +138,13 @@ export default {
             let appContainer = document.getElementById('app')
             appContainer.appendChild(draggable)
 
-            let mouseMoveHandler = function(e){
+            let mouseMoveHandler = function(e) {
                 draggable.classList.add("dragging");
                 draggable.style.pointerEvents = 'none';
                 document.body.style.userSelect = 'none';
                 let deviation = draggable.initialDeviation
                 draggable.style.left = e.clientX - deviation.x + 'px'
-                draggable.style.top = e.clientY - deviation.y + 'px'
-                // // console.log('left', event.currentTarget.style.left);
-                // // console.log('top', event.currentTarget.style.top);
+                draggable.style.top = e.clientY + 'px'
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
                     bd.addEventListener('mouseover', mouseOverHandler, false)
@@ -152,8 +152,7 @@ export default {
                 }
             }
 
-            let mouseUpHandler = function(e){
-                // console.log('up', e);
+            let mouseUpHandler = function(e) {
                 appContainer.removeChild(draggable)
                 document.body.removeEventListener('mousemove', mouseMoveHandler)
                 document.body.removeEventListener('mouseup', mouseUpHandler)
@@ -167,6 +166,7 @@ export default {
                 let boardName = self.getBoardNode(e, 'v-kaban-board-body').getAttribute('data-name')
                 let index = self.boards[boardName].data.findIndex(e => e.id === card.id)
                 let fromBoard = self.getBoardNode(event,'v-kaban-board-body').getAttribute('data-name')
+                self.handleOrder(event, e, card)
                 if (index !== -1) {
                     self.boards[boardName].data[index].transparent = false
                     self.$emit('taskMoved', {
@@ -178,9 +178,7 @@ export default {
             }
 
             let mouseOverHandler = function(e) {
-                console.log('over', e);
                 let index = self.handlePositionInsideBoard(e)
-                console.log('index is', index);
                 self.shadowElement(e, card, index)
             }
 
@@ -188,13 +186,12 @@ export default {
                 self.shadowElement(e, card, undefined, 'remove')
             }
 
-            // console.log('getBoundingClientRect', br);
             draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
             document.body.addEventListener('mousemove', mouseMoveHandler, false)
             document.body.addEventListener('mouseup', mouseUpHandler, false)
 
         },
-        handlePositionInsideBoard(e){
+        handlePositionInsideBoard(e) {
             let elemNode = this.getBoardNode(e,'v-kaban-board-body', -1)
             let bodyNode = this.getBoardNode(e,'v-kaban-board-body')
             if (bodyNode.children && bodyNode.children.length) {
@@ -210,13 +207,13 @@ export default {
             let id = data.id ? data.id : data
             return boardData.includes(id)
         },
-        removeElementFromBoard(boardName, data){
+        removeElementFromBoard(boardName, data) {
             let index = this.boards[boardName].data.findIndex(e => e.id === (data.id ? data.id : data))
             if (index !== -1) {
                 this.boards[boardName].data.splice(index, 1)
             }
         },
-        shadowElement(e, data, index=undefined, method='add'){
+        shadowElement(e, data, index=undefined, method='add') {
             let shadowCard = {
                 ...data,
                 ...{
@@ -259,7 +256,7 @@ export default {
                 return result.data
             })
         },
-        getBoards(){
+        getBoards() {
             for (let b of Object.keys(this.boards)) {
                 this.retrieveBoardData(b).then((data)=>{
                     this.boards[b].data = data
@@ -269,28 +266,109 @@ export default {
         toggleCollapse(bKey) {
             this.boards[bKey].expanded = !this.boards[bKey].expanded
         },
-        tasksCounterLabelGet(count){
+        tasksCounterLabelGet(count) {
             let template = {
                 'count': count,
             }
             return this.tasksCounterLabel.replace(/{(.+?)}/g, (_, g1) => template[g1])
         },
-        clickAddNewTask(bKey, bConfig){
+        clickAddNewTask(bKey, bConfig) {
             this.$emit('addNewTask', {
                 boardKey: bKey,
                 boardConfig: bConfig,
             })
         },
-        clickSettings(bKey, bConfig){
+        clickSettings(bKey, bConfig) {
             this.$emit('settings', {
                 boardKey: bKey,
                 boardConfig: bConfig,
             })
         },
+        handleOrder(downEvent, upEvent, card){
+            let affectedElements = []
+            if (this.orderingType === 'none') return
+            let destBodyNode = this.getBoardNode(upEvent,'v-kaban-board-body')
+            let destBoardName = destBodyNode.getAttribute('data-name')
+            if (this.orderingType === 'linkedList') {
+                // Handling origin board
+                let orgnBodyNode = this.getBoardNode(downEvent,'v-kaban-board-body')
+                let orgnBoardName = orgnBodyNode.getAttribute('data-name')
+                let prevOrdering = card.ordering
+                if (prevOrdering.next === null) {
+                    if (prevOrdering.is_head) {
+                        // Do nothing to origin
+                    } else {
+                        // The case when the last element was picked and need to set the new last item from origin board ordering.next to null
+                        let last = this.boards[orgnBoardName].data[this.boards[orgnBoardName].data.length - 1]
+                        last.ordering.next = null
+                        affectedElements.push(last)
+                    }
+                } else if (prevOrdering.next) {
+                    if (prevOrdering.is_head) {
+                        // Case when the first element was taken and next exist
+                        // is_head of the next element in origin need to be set to true
+                        let first = this.boards[orgnBoardName].data[0]
+                        first.ordering.is_head = true
+                        affectedElements.push(first)
+                    } else {
+                        // Case when element was taken from the middle
+                        // Previous element from origin need to receive new next value
+                        let elements = this.boards[orgnBoardName].data
+                        let indexOfPrev = elements.findIndex(e => e.ordering.next === card.id)
+                        if (indexOfPrev !== -1) {
+                            let elem = this.boards[orgnBoardName].data[indexOfPrev]
+                            elem.ordering.next = prevOrdering.next
+                            affectedElements.push(elem)
+                        }
+                    }
+                }
+
+                let newIndex = this.handlePositionInsideBoard(upEvent)
+                if (newIndex === undefined) {
+                    newIndex = this.boards[destBoardName].data.length - 1
+                }
+                newIndex = parseInt(newIndex)
+
+                // Handling dest board
+                if (newIndex === 0) {
+                    try {
+                        let next = this.boards[destBoardName].data[newIndex + 1]
+                        next.ordering.is_head = false
+                        affectedElements.push(next)
+                    } catch (e) {
+                        //
+                    }
+                } else if (newIndex !== 0) {
+                    console.log(newIndex - 1);
+                    let prev = this.boards[destBoardName].data[newIndex - 1]
+                    prev.ordering.next = card.id
+                    affectedElements.push(prev)
+                }
+
+                // Handling card itself
+                if (newIndex === 0) {
+                    card.ordering.is_head = true
+                } else if (newIndex !== 0) {
+                    card.ordering.is_head = false
+                }
+                if (this.boards[destBoardName].data.length > 1) {
+                    try {
+                        card.ordering.next = this.boards[destBoardName].data[newIndex + 1].id
+                    } catch(e) {
+                        card.ordering.next = null
+                    }
+
+                } else if (this.boards[destBoardName].data.length === 1) {
+                    card.ordering.next = null
+                }
+                affectedElements.push(card)
+
+                this.$emit('changedElements', affectedElements)
+            }
+        },
     },
     mounted() {
         this.getBoards()
-        // this.initListeners()
     },
     computed: {
         boards: {
