@@ -144,7 +144,7 @@ export default {
                 document.body.style.userSelect = 'none';
                 let deviation = draggable.initialDeviation
                 draggable.style.left = e.clientX - deviation.x + 'px'
-                draggable.style.top = e.clientY + 'px'
+                draggable.style.top = e.clientY + deviation.y + 'px'
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
                     bd.addEventListener('mouseover', mouseOverHandler, false)
@@ -289,6 +289,11 @@ export default {
             if (this.orderingType === 'none') return
             let destBodyNode = this.getBoardNode(upEvent,'v-kaban-board-body')
             let destBoardName = destBodyNode.getAttribute('data-name')
+            let newIndex = this.handlePositionInsideBoard(upEvent)
+            if (newIndex === undefined) {
+                newIndex = this.boards[destBoardName].data.length - 1
+            }
+            newIndex = parseInt(newIndex)
             if (this.orderingType === 'linkedList') {
                 // Handling origin board
                 let orgnBodyNode = this.getBoardNode(downEvent,'v-kaban-board-body')
@@ -323,12 +328,6 @@ export default {
                     }
                 }
 
-                let newIndex = this.handlePositionInsideBoard(upEvent)
-                if (newIndex === undefined) {
-                    newIndex = this.boards[destBoardName].data.length - 1
-                }
-                newIndex = parseInt(newIndex)
-
                 // Handling dest board
                 if (newIndex === 0) {
                     try {
@@ -339,7 +338,6 @@ export default {
                         //
                     }
                 } else if (newIndex !== 0) {
-                    console.log(newIndex - 1);
                     let prev = this.boards[destBoardName].data[newIndex - 1]
                     prev.ordering.next = card.id
                     affectedElements.push(prev)
@@ -365,6 +363,35 @@ export default {
 
                 this.$emit('changedElements', affectedElements)
             }
+            if (this.orderingType === 'stringSort') {
+                card = this.boards[destBoardName].data[newIndex]
+                if (newIndex === 0) {
+                    try {
+                        let next = this.boards[destBoardName].data[newIndex + 1]
+                        card.ordering = next.ordering
+                        try {
+                            let nextnext = this.boards[destBoardName].data[newIndex + 2]
+                            next.ordering = card.ordering + nextnext.ordering
+                        } catch (e) {
+                            next.ordering = card.ordering + '1'
+                        }
+                        affectedElements.push(next)
+                    } catch (e) {
+                        card.ordering = '1'
+                    }
+                    affectedElements.push(card)
+                } else {
+                    let prev = this.boards[destBoardName].data[newIndex - 1]
+                    try {
+                        let next = this.boards[destBoardName].data[newIndex + 1]
+                        card.ordering = prev.ordering + next.ordering
+                    } catch (e) {
+                        card.ordering = prev.ordering + '1'
+                    }
+                    affectedElements.push(card)
+                }
+                this.$emit('changedElements', affectedElements)
+            }
         },
     },
     mounted() {
@@ -385,8 +412,6 @@ export default {
 
 <style scoped>
 .v-kaban-boards {
-    overflow-x: auto;
-    overflow-y: hidden;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -394,6 +419,7 @@ export default {
 }
 
 .v-kaban-board {
+    position: relative;
     border-radius: 5px;
     padding: 5px;
     min-width: 450px;
@@ -469,8 +495,9 @@ export default {
 }
 
 .v-kaban-board-body {
-    height: 100%;
+    height: 96%;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .v-kaban-item {
@@ -489,5 +516,24 @@ export default {
 }
 .transparent{
     opacity: 0.5;
+}
+
+
+
+::-webkit-scrollbar {
+    height: 8px;
+    width: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 </style>

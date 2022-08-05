@@ -104,10 +104,10 @@ If it is the case, then you need to extend this model with an extra field called
 
 Component has default implementation for two ordering methods:
 
-### linkedList
+<details>
+<summary>linkedList</summary>
 
-Linked list is nothing more than a list with the items having links to the next 
-item and a flag that tells whether element is on the top
+### Linked list is nothing more than a list with the items having links to the next item and a flag that tells whether element is on the top
 
 The structure of the list is as follows:
 ```
@@ -131,11 +131,11 @@ with changed elements via event `@changedElements`
 
 It is your responsibility to save it on the backend side and output in the correct order on page load.
 Otherwise, it will lead to an unexpected behaviour.
+</details>
+<details>
+<summary>stringSort</summary>
 
-
-### stringSort
-
-String sort seems to be quite hacky solution ;)
+### String sort seems to be quite hacky solution ;)
 
 However, the idea behind is to reduce pressure for the backend by providing strings with numbers as
 ordering entries
@@ -154,6 +154,17 @@ The structure of such sorting is as follows
 ]
 ```
 
+One the backend sorting for this can be done by using simple `ORDER BY` statement
+
 ##### How does it work???
 
-Each element of the given sequence has its string that describes the position of the element inside the board
+Each element of the given sequence has its string that describes the position 
+of the element inside the board. When adding element between other two elements, it receives the 
+ordering string value as a string concat of the surrounding elements. For instance putting an element 
+between 1 and 2 will produce 12 ordering string for this element.
+
+
+###### Please note that this method is more efficient in terms of updating speed
+However, dragging big amount of elements inside one board can lead to really large strings produced by this method.
+Therefore, use it with caution.
+</details>

@@ -6,10 +6,11 @@
                  v-model="boards"
                  :use-custom-card-style="false"
                  @taskMoved="taskMoveHandler"
-                 ordering-type="linkedList"
+                 ordering-type="stringSort"
                  @changedElements="changedHandler"
         >
         </v-kaban>
+        <p>Some next elements</p>
 <!--        <v-kaban v-if="boards"-->
 <!--                 host="http://localhost:8081"-->
 <!--                 path="/kanban"-->
