@@ -6,8 +6,9 @@
                  v-model="boards"
                  :use-custom-card-style="false"
                  @taskMoved="taskMoveHandler"
-                 ordering-type="stringSort"
+                 ordering-type="linkedList"
                  @changedElements="changedHandler"
+                 @taskClicked="clickedOnTask"
         >
         </v-kaban>
         <p>Some next elements</p>
@@ -74,6 +75,9 @@ export default {
         },
         changedHandler(data){
             console.log('what to update', data);
+        },
+        clickedOnTask(data){
+            console.log('clicked', data);
         }
     }
 }

@@ -36,8 +36,9 @@
                     <div :key="card.id" v-for="card in bConfig.data"
                          @mousedown="mouseDownHandler($event, card)"
                          :class="{transparent: card.transparent}"
-                         class="v-kaban-item"
+                         class="v-kaban-item" @click="clickTask(card)"
                     >
+                        {{card.ordering}}
                         <template v-if="useCustomCardStyle">
                             <slot name="card-view" v-bind="card"></slot>
                         </template>
@@ -133,6 +134,7 @@ export default {
             if (draggable === null) {
                 return
             }
+            let initialIndex = self.handlePositionInsideBoard(event)
             let br = draggable.getBoundingClientRect()
             draggable = draggable.cloneNode(true)
             let appContainer = document.getElementById('app')
@@ -163,10 +165,14 @@ export default {
                     bd.removeEventListener('mouseleave', mouseLeaveHandler)
                 }
 
+                let newIndex = self.handlePositionInsideBoard(e)
                 let boardName = self.getBoardNode(e, 'v-kaban-board-body').getAttribute('data-name')
                 let index = self.boards[boardName].data.findIndex(e => e.id === card.id)
                 let fromBoard = self.getBoardNode(event,'v-kaban-board-body').getAttribute('data-name')
-                self.handleOrder(event, e, card)
+                console.log('equal', initialIndex, newIndex, index);
+                if (!(boardName === fromBoard && initialIndex === newIndex)) {
+                    self.handleOrder(event, e, card)
+                }
                 if (index !== -1) {
                     self.boards[boardName].data[index].transparent = false
                     self.$emit('taskMoved', {
@@ -386,13 +392,16 @@ export default {
                         let next = this.boards[destBoardName].data[newIndex + 1]
                         card.ordering = prev.ordering + next.ordering
                     } catch (e) {
-                        card.ordering = prev.ordering + '1'
+                        card.ordering = parseInt(prev.ordering) + 1 + ''
                     }
                     affectedElements.push(card)
                 }
                 this.$emit('changedElements', affectedElements)
             }
         },
+        clickTask(task) {
+            this.$emit('taskClicked', task)
+        }
     },
     mounted() {
         this.getBoards()
@@ -439,7 +448,6 @@ export default {
     flex-direction: row;
     vertical-align: central;
     align-items: center;
-    /*justify-content: flex-end;*/
 }
 
 .collapsed .v-kaban-board-header {

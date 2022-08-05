@@ -1,6 +1,6 @@
 <template>
     <div class="v-kaban-card">
-        <div class="v-kaban-task-title" @click="clickTask(card.id)">
+        <div class="v-kaban-task-title">
             {{ card.name }}
         </div>
         <div class="v-kaban-task-middle">
@@ -39,18 +39,6 @@ export default {
         card: {
             type: Object,
             default: Object,
-        }
-    },
-    data(){
-        return {
-
-        }
-    },
-    methods: {
-        clickTask(id) {
-            this.$emit('taskClicked', {
-                id: id
-            })
         }
     },
 }
