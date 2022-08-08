@@ -143,7 +143,7 @@ ordering entries.
 
 Let's say you have a lot of different boards and all you do is dragging them only from left to right.
 In case of `linkedList` you'd usually have to update 2-3 elements while with `stringSort` you'd only need
-to update 2 elements maximum and more frequently only 1 element.
+to update 2 elements maximum and more frequently only 1 element!
 Additionally, all you need to update in this case is a string field and not the whole object.
 So, if such a speedup is desired in your system, 
 then this solution is for you :)

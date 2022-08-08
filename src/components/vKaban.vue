@@ -145,8 +145,8 @@ export default {
                 draggable.style.pointerEvents = 'none';
                 document.body.style.userSelect = 'none';
                 let deviation = draggable.initialDeviation
-                draggable.style.left = e.clientX - deviation.x + 'px'
-                draggable.style.top = e.clientY + deviation.y + 'px'
+                draggable.style.left = e.pageX - deviation.x + 'px'
+                draggable.style.top = e.pageY - deviation.y + 'px'
                 let bodyDivs = document.getElementsByClassName("v-kaban-board-body")
                 for (let bd of bodyDivs) {
                     bd.addEventListener('mouseover', mouseOverHandler, false)
@@ -169,7 +169,6 @@ export default {
                 let boardName = self.getBoardNode(e, 'v-kaban-board-body').getAttribute('data-name')
                 let index = self.boards[boardName].data.findIndex(e => e.id === card.id)
                 let fromBoard = self.getBoardNode(event,'v-kaban-board-body').getAttribute('data-name')
-                console.log('equal', initialIndex, newIndex, index);
                 if (!(boardName === fromBoard && initialIndex === newIndex)) {
                     self.handleOrder(event, e, card)
                 }
@@ -191,7 +190,6 @@ export default {
             let mouseLeaveHandler = function(e) {
                 self.shadowElement(e, card, undefined, 'remove')
             }
-
             draggable.initialDeviation = {x: event.clientX - br.x, y: event.clientY - br.y}
             document.body.addEventListener('mousemove', mouseMoveHandler, false)
             document.body.addEventListener('mouseup', mouseUpHandler, false)
