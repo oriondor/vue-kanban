@@ -21,7 +21,9 @@
                         <div class="v-kaban-hrb-count">
                             <img :alt="tasksCounterLabelGet(bConfig.data.length)" :title="tasksCounterLabelGet(bConfig.data.length)" src="data:image/png;base64,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">
                         </div>
-                        <span style="padding: 2px"> {{bConfig.data.length}}</span>
+                        <div class="v-kaban-hrb-count">
+                            <span style="padding: 2px"> {{bConfig.data.length}}</span>
+                        </div>
                         <div class="v-kaban-hrb-buttons">
                             <div v-if="!bConfig.hideAddNewTask" class="round-hoverable v-kaban-hrbb-add-task" @click="clickAddNewTask(bKey, bConfig)">
                                 <img :alt="addNewTaskLabel" :title="addNewTaskLabel" src="data:image/png;base64,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">
@@ -38,7 +40,6 @@
                          :class="{transparent: card.transparent}"
                          class="v-kaban-item" @click="clickTask(card)"
                     >
-                        {{card.ordering}}
                         <template v-if="useCustomCardStyle">
                             <slot name="card-view" v-bind="card"></slot>
                         </template>
@@ -283,51 +284,64 @@ export default {
             })
         },
         clickSettings(bKey, bConfig) {
-            this.$emit('settings', {
+            this.$emit('listSettings', {
                 boardKey: bKey,
                 boardConfig: bConfig,
             })
         },
-        handleOrder(downEvent, upEvent, card){
-            let affectedElements = []
+        addNewCard(card, destinationBoardName, index) {
+            this.boards[destinationBoardName].data.splice(index, 0, card)
+            this.handleOrder(null, null, card, destinationBoardName, null, index)
+        },
+        handleOrder(downEvent=null, upEvent=null, card=null, destBoardName=null, orgnBoardName=null, newIndex=undefined){
             if (this.orderingType === 'none') return
-            let destBodyNode = this.getBoardNode(upEvent,'v-kaban-board-body')
-            let destBoardName = destBodyNode.getAttribute('data-name')
-            let newIndex = this.handlePositionInsideBoard(upEvent)
+            if (card === null) return
+            let affectedElements = []
+            if (upEvent && !destBoardName) {
+                let destBodyNode = this.getBoardNode(upEvent, 'v-kaban-board-body')
+                destBoardName = destBodyNode.getAttribute('data-name')
+            }
+            if (upEvent) {
+                newIndex = this.handlePositionInsideBoard(upEvent)
+            }
             if (newIndex === undefined) {
                 newIndex = this.boards[destBoardName].data.length - 1
             }
             newIndex = parseInt(newIndex)
             if (this.orderingType === 'linkedList') {
                 // Handling origin board
-                let orgnBodyNode = this.getBoardNode(downEvent,'v-kaban-board-body')
-                let orgnBoardName = orgnBodyNode.getAttribute('data-name')
-                let prevOrdering = card.ordering
-                if (prevOrdering.next === null) {
-                    if (prevOrdering.is_head) {
-                        // Do nothing to origin
-                    } else {
-                        // The case when the last element was picked and need to set the new last item from origin board ordering.next to null
-                        let last = this.boards[orgnBoardName].data[this.boards[orgnBoardName].data.length - 1]
-                        last.ordering.next = null
-                        affectedElements.push(last)
-                    }
-                } else if (prevOrdering.next) {
-                    if (prevOrdering.is_head) {
-                        // Case when the first element was taken and next exist
-                        // is_head of the next element in origin need to be set to true
-                        let first = this.boards[orgnBoardName].data[0]
-                        first.ordering.is_head = true
-                        affectedElements.push(first)
-                    } else {
-                        // Case when element was taken from the middle
-                        // Previous element from origin need to receive new next value
-                        let elements = this.boards[orgnBoardName].data
-                        let indexOfPrev = elements.findIndex(e => e.ordering.next === card.id)
-                        if (indexOfPrev !== -1) {
-                            let elem = this.boards[orgnBoardName].data[indexOfPrev]
-                            elem.ordering.next = prevOrdering.next
-                            affectedElements.push(elem)
+                if (downEvent && !orgnBoardName) {
+                    let orgnBodyNode = this.getBoardNode(downEvent, 'v-kaban-board-body')
+                    orgnBoardName = orgnBodyNode.getAttribute('data-name')
+                }
+                if (orgnBoardName) {
+                    let prevOrdering = card.ordering
+                    if (prevOrdering.next === null) {
+                        if (prevOrdering.is_head) {
+                            // Do nothing to origin
+                        } else {
+                            // The case when the last element was picked and need to set the new last item from origin board ordering.next to null
+                            let last = this.boards[orgnBoardName].data[this.boards[orgnBoardName].data.length - 1]
+                            last.ordering.next = null
+                            affectedElements.push(last)
+                        }
+                    } else if (prevOrdering.next) {
+                        if (prevOrdering.is_head) {
+                            // Case when the first element was taken and next exist
+                            // is_head of the next element in origin need to be set to true
+                            let first = this.boards[orgnBoardName].data[0]
+                            first.ordering.is_head = true
+                            affectedElements.push(first)
+                        } else {
+                            // Case when element was taken from the middle
+                            // Previous element from origin need to receive new next value
+                            let elements = this.boards[orgnBoardName].data
+                            let indexOfPrev = elements.findIndex(e => e.ordering.next === card.id)
+                            if (indexOfPrev !== -1) {
+                                let elem = this.boards[orgnBoardName].data[indexOfPrev]
+                                elem.ordering.next = prevOrdering.next
+                                affectedElements.push(elem)
+                            }
                         }
                     }
                 }
@@ -347,6 +361,9 @@ export default {
                     affectedElements.push(prev)
                 }
 
+                if (!card.ordering) {
+                    card.ordering = {}
+                }
                 // Handling card itself
                 if (newIndex === 0) {
                     card.ordering.is_head = true
@@ -444,7 +461,7 @@ export default {
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row;
-    vertical-align: central;
+    vertical-align: center;
     align-items: center;
 }
 
@@ -462,7 +479,7 @@ export default {
     cursor: pointer;
     border-radius: 5px;
     white-space: nowrap;
-    display: inline-block;
+    display: flex;
 }
 .v-kaban-collapse:hover{
     background: #c5c5c5;
@@ -482,15 +499,20 @@ export default {
     width: 18px;
     height: 18px;
 }
-
+.v-kaban-hrb-count {
+    margin: auto 0 auto 0;
+    padding: 0 3px 0 3px!important;
+    display: flex;
+}
 .v-kaban-hrb-buttons {
     display: flex;
     justify-content: space-between;
 }
 .round-hoverable {
-    padding: 3px!important;
+    padding: 4px!important;
     border-radius: 3px;
     cursor: pointer;
+    display: flex;
 }
 .round-hoverable:hover{
     background: #c5c5c5;
@@ -523,8 +545,6 @@ export default {
 .transparent{
     opacity: 0.5;
 }
-
-
 
 ::-webkit-scrollbar {
     height: 8px;
