@@ -1,6 +1,5 @@
 <template>
-    <div class="v-kaban-boards"
-    >
+    <div class="v-kaban-boards">
         <template :key="bKey" v-for="[bKey, bConfig] in Object.entries(boards)">
             <div class="v-kaban-board" :class="{collapsed: !bConfig.expanded}">
                 <div class="v-kaban-board-header">
@@ -37,7 +36,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="v-kaban-board-body" v-show="bConfig.expanded" :data-name="bKey">
+                <div class="v-kaban-board-body"
+                     v-show="bConfig.expanded" :data-name="bKey"
+                >
                     <div :key="card.id" v-for="card in bConfig.data"
                          @mousedown="mouseDownHandler($event, card)"
                          :class="{transparent: card.transparent}"
@@ -125,6 +126,14 @@ export default {
             type: Number,
             default: 7
         },
+        lazySplitType: {
+            type: String,
+            default: 'perQuantity'
+        },
+        lazyFilterProps: {
+            type: Array,
+            default: () => ['from', 'to']
+        }
     },
     data() {
         return {
@@ -278,30 +287,41 @@ export default {
             }
             let path = this.host + this.pathTemplate.replace(/{(.+?)}/g, (_, g1) => template[g1] || g1)
             if (this.lazy) {
-                //
+                path += `&${this.handleLazyPath(board)}`
             }
             return path
         },
+        handleLazyPath(board) {
+            try {
+                if (this.lazySplitType === 'perQuantity') {
+                    let from = this.scrollState[board].currentItems
+                    let to = from + this.lazyNumberPerTime
+                    console.log(from, to);
+                    return `${this.lazyFilterProps[0]}=${from}&${this.lazyFilterProps[1]}=${to}`
+                }
+                if (this.lazySplitType === 'perPage') {
+                    this.scrollState[board].page++
+                    let toPage = this.scrollState[board].page
+                    return `${this.lazyFilterProps[0]}=${toPage}`
+                }
+            } catch (e) {
+                return ''
+            }
 
+        },
         retrieveBoardData(board) {
+            this.scrollState[board].loaderVisible = true
             return axios.get(this.getBoardEndpoint(board)).then((result) => {
+                this.scrollState[board].loaderVisible = false
                 return result.data
             })
         },
         getBoards() {
-            let loading = new Promise((resolve) => {
-                for (let b of Object.keys(this.boards)) {
-                    this.retrieveBoardData(b).then((data)=>{
-                        this.boards[b].data = data
-                    })
-                }
-                resolve()
-            })
-            loading.then(()=>{
-                if (this.lazy) {
-                    this.initScrollTrackers()
-                }
-            })
+            for (let b of Object.keys(this.boards)) {
+                this.retrieveBoardData(b).then((data)=>{
+                    this.boards[b].data = data
+                })
+            }
         },
         toggleCollapse(bKey) {
             this.boards[bKey].expanded = !this.boards[bKey].expanded
@@ -458,8 +478,15 @@ export default {
             if (!revert) {
                 this.scrollState = {}
                 for (let boardNode of boardNodes) {
-                    this.scrollState[boardNode.getAttribute('data-name')] = {
-                        currentItems: -1,
+                    let boardName = boardNode.getAttribute('data-name')
+                    let statePage = {}
+                    if (this.lazySplitType === 'perQuantity') {
+                        statePage = {currentItems: this.boards[boardName].data.length}
+                    } else {
+                        statePage = {page: 1}
+                    }
+                    this.scrollState[boardName] = {
+                        ...statePage,
                         loaderVisible: false
                     }
                     boardNode.addEventListener('scroll', this.scrollHandler)
@@ -471,17 +498,39 @@ export default {
             }
         },
         scrollHandler(event) {
-            console.log(event);
             let divHeight = event.target.clientHeight
             let currentScrollBot = event.target.scrollTop + divHeight
             let scrollHeight = event.target.scrollHeight
-            console.log(currentScrollBot, scrollHeight);
+            let boardName = event.target.getAttribute('data-name')
             if (currentScrollBot >= scrollHeight) {
-                console.log('trigger load');
+                if (this.lazySplitType === 'perQuantity') {
+                    this.scrollState[boardName].currentItems = this.boards[boardName].data.length
+                }
+                if (!this.scrollState[boardName].loaderVisible) {
+                    this.retrieveBoardData(boardName).then(result => {
+                        result = Array.from(result)
+                        let filteredResult = result.filter(e => {
+                            let valid = true
+                            this.boards[boardName].data.forEach(i => {
+                                if (i.id === e.id) {
+                                    valid = false
+                                }
+                            })
+                            return valid
+                        })
+                        this.boards[boardName].data.push(...filteredResult)
+                        if (this.lazySplitType === 'perQuantity') {
+                            this.scrollState[boardName].currentItems = this.boards[boardName].data.length
+                        }
+                    })
+                }
             }
         },
     },
     mounted() {
+        if (this.lazy) {
+            this.initScrollTrackers()
+        }
         this.getBoards()
     },
     beforeUnmount() {
@@ -607,6 +656,7 @@ export default {
     transition: all 500ms ease-in-out;
 }
 .dragging{
+    transform: scale(1.1);
     position: absolute;
     transition: unset;
 }

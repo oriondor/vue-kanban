@@ -177,3 +177,40 @@ However, dragging big amount of elements inside one board can lead to really lar
 Therefore, use it on the boards that do not require frequent swap inside
 one board. Otherwise, use stable linkedList sorting feature.
 </details>
+
+
+## Lazy load handling
+
+Lazy loading implemented to be used with 2 kinds of loading. Depending on your backend or preferences you can switch between this two type.
+
+##### First and default type is `perQuantity`
+
+This means that endpoint for fetching your data will look like `...&from=0&to=7`
+
+##### Other type is `perPage`
+
+This type is used to work with pagination frameworks well. 
+
+###### Each time you scroll to the bottom of the board kanban will send a request to a backend and update props depending on your lazy method
+
+There are some props in the component that can help to overrule lazy load behavior 
+```
+lazy: {
+    type: Boolean,
+    default: true
+},
+lazyNumberPerTime: {
+    type: Number,
+    default: 7
+},
+lazySplitType: {
+    type: String,
+    default: 'perQuantity'
+},
+lazyFilterProps: {
+    type: Array,
+    default: () => ['from', 'to']
+}
+```
+When you use `lazySplitType='perPage'` you'd need to overrule `lazyFilterProps` to `['page']` or wherever name
+you want to use

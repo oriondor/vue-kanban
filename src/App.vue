@@ -13,11 +13,13 @@
              @listSettings="listSettings"
     >
     </v-kaban>
+    <div style="height: 100px"></div>
 </template>
 
 <script>
 
 import VKaban from "@/components/vKaban";
+import axios from "axios";
 
 export default {
     name: 'App',
@@ -65,6 +67,9 @@ export default {
         },
         changedHandler(data){
             console.log('Items were moved, data to change:', data);
+            // for (let card of data) {
+                axios.put(`http://localhost:8081/tasks/`, data)
+            // }
         },
         clickedOnTask(data){
             console.log('Clicked on task', data);
