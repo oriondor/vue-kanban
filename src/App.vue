@@ -58,18 +58,43 @@ export default {
                         color: 'white'
                     }
                 }
-            }
+            },
+            changePayload: null,
         }
     },
     methods: {
         taskMoveHandler(data){
             console.log('Move between board handler: ', data);
+            if (this.changePayload === null) {
+                this.changePayload = {}
+            }
+            this.changePayload.updStat = data
+            if (this.changePayload.toUpd) {
+                this.sendPayload()
+            }
         },
         changedHandler(data){
-            console.log('Items were moved, data to change:', data);
-            // for (let card of data) {
-                axios.put(`http://localhost:8081/tasks/`, data)
-            // }
+            console.log('To be changed: ', data);
+            if (this.changePayload === null) {
+                this.changePayload = {}
+            }
+            this.changePayload.toUpd = data
+            if (this.changePayload.updStat) {
+                this.sendPayload()
+            }
+        },
+        sendPayload() {
+            console.log('send called', this.changePayload);
+            let index = this.changePayload.toUpd.findIndex(e => e.id === this.changePayload.updStat.task.id)
+            console.log('index is', index);
+            if (index !== -1) {
+                this.changePayload.toUpd[index].status = this.changePayload.updStat.toBoard
+            }
+            let payload = this.changePayload.toUpd
+
+            console.log('payloadddd', payload)
+            axios.put(`http://localhost:8081/tasks/`, Array.from(payload))
+            this.changePayload = null
         },
         clickedOnTask(data){
             console.log('Clicked on task', data);

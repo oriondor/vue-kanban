@@ -44,6 +44,7 @@
                          :class="{transparent: card.transparent}"
                          class="v-kaban-item" @click="clickTask(card)"
                     >
+                        {{ card.ordering }}
                         <template v-if="useCustomCardStyle">
                             <slot name="card-view" v-bind="card"></slot>
                         </template>
@@ -205,12 +206,15 @@ export default {
                     self.handleOrder(event, e, card)
                 }
                 if (index !== -1) {
-                    self.boards[boardName].data[index].transparent = false
+                    delete self.boards[boardName].data[index].transparent
                     self.$emit('taskMoved', {
                         task: card,
                         toBoard: boardName,
                         fromBoard: fromBoard,
                     })
+                    if (self.lazy && self.boards[boardName].data.length <= self.lazyNumberPerTime) {
+                        self.scrollHandler(null, true, fromBoard)
+                    }
                 }
             }
 
@@ -378,7 +382,9 @@ export default {
                             // The case when the last element was picked and need to set the new last item from origin board ordering.next to null
                             let last = this.boards[orgnBoardName].data[this.boards[orgnBoardName].data.length - 1]
                             last.ordering.next = null
-                            affectedElements.push(last)
+                            if (affectedElements.findIndex(e => e.id === last.id) === -1) {
+                                affectedElements.push(last)
+                            }
                         }
                     } else if (prevOrdering.next) {
                         if (prevOrdering.is_head) {
@@ -386,7 +392,9 @@ export default {
                             // is_head of the next element in origin need to be set to true
                             let first = this.boards[orgnBoardName].data[0]
                             first.ordering.is_head = true
-                            affectedElements.push(first)
+                            if (affectedElements.findIndex(e => e.id === first.id) === -1) {
+                                affectedElements.push(first)
+                            }
                         } else {
                             // Case when element was taken from the middle
                             // Previous element from origin need to receive new next value
@@ -395,7 +403,9 @@ export default {
                             if (indexOfPrev !== -1) {
                                 let elem = this.boards[orgnBoardName].data[indexOfPrev]
                                 elem.ordering.next = prevOrdering.next
-                                affectedElements.push(elem)
+                                if (affectedElements.findIndex(e => e.id === elem.id) === -1) {
+                                    affectedElements.push(elem)
+                                }
                             }
                         }
                     }
@@ -406,14 +416,18 @@ export default {
                     try {
                         let next = this.boards[destBoardName].data[newIndex + 1]
                         next.ordering.is_head = false
-                        affectedElements.push(next)
+                        if (affectedElements.findIndex(e => e.id === next.id) === -1) {
+                            affectedElements.push(next)
+                        }
                     } catch (e) {
                         //
                     }
                 } else if (newIndex !== 0) {
                     let prev = this.boards[destBoardName].data[newIndex - 1]
                     prev.ordering.next = card.id
-                    affectedElements.push(prev)
+                    if (affectedElements.findIndex(e => e.id === prev.id) === -1) {
+                        affectedElements.push(prev)
+                    }
                 }
 
                 if (!card.ordering) {
@@ -435,7 +449,9 @@ export default {
                 } else if (this.boards[destBoardName].data.length === 1) {
                     card.ordering.next = null
                 }
-                affectedElements.push(card)
+                if (affectedElements.findIndex(e => e.id === card.id) === -1) {
+                    affectedElements.push(card)
+                }
 
                 this.$emit('changedElements', affectedElements)
             }
@@ -497,12 +513,25 @@ export default {
                 boardNode.removeEventListener('scroll', this.scrollHandler)
             }
         },
-        scrollHandler(event) {
-            let divHeight = event.target.clientHeight
-            let currentScrollBot = event.target.scrollTop + divHeight
-            let scrollHeight = event.target.scrollHeight
-            let boardName = event.target.getAttribute('data-name')
-            if (currentScrollBot >= scrollHeight) {
+        scrollHandler(event, force=null, boardName=null) {
+            console.log(event);
+            console.log('force', force);
+            let currentScrollBot, scrollHeight
+            if (!force) {
+                let divHeight = event.target.clientHeight
+                currentScrollBot = event.target.scrollTop + divHeight
+                scrollHeight = event.target.scrollHeight
+                boardName = event.target.getAttribute('data-name')
+            }
+            console.log('currentScrollBot, scrollHeight', currentScrollBot, scrollHeight);
+            if (
+                force === true ||
+                (
+                    currentScrollBot !== undefined &&
+                    scrollHeight !== undefined &&
+                    currentScrollBot >= scrollHeight
+                )
+            ) {
                 if (this.lazySplitType === 'perQuantity') {
                     this.scrollState[boardName].currentItems = this.boards[boardName].data.length
                 }
@@ -513,6 +542,7 @@ export default {
                             let valid = true
                             this.boards[boardName].data.forEach(i => {
                                 if (i.id === e.id) {
+                                    console.log('duplicate fetched', i.id);
                                     valid = false
                                 }
                             })
@@ -521,6 +551,9 @@ export default {
                         this.boards[boardName].data.push(...filteredResult)
                         if (this.lazySplitType === 'perQuantity') {
                             this.scrollState[boardName].currentItems = this.boards[boardName].data.length
+                        }
+                        if (event) {
+                            event.target.scrollTop--
                         }
                     })
                 }
